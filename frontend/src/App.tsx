@@ -1,10 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function App() {
   // State for A/B testing variants
   const [headlineVariant, setHeadlineVariant] = useState(0);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+
+  // State for countdown timer
+  const [countdown, setCountdown] = useState({ hours: 2, minutes: 15, seconds: 30 });
+
+  // State for live counter (to make it dynamic)
+  const [liveCount, setLiveCount] = useState(1247);
+  const [liveCountUpdating, setLiveCountUpdating] = useState(false);
+
+  // Update countdown timer every second
+  useEffect(() => {
+    if (countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0) {
+      return; // Timer has ended
+    }
+
+    const timerId = setInterval(() => {
+      setCountdown(prev => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { hours: prev.hours, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        }
+        return prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [countdown]);
+
+  // Update live counter periodically to simulate real-time activity
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // Simulate random purchases (1-5 people every 10-30 seconds)
+      setLiveCount(prev => {
+        const newCount = prev + Math.floor(Math.random() * 5) + 1;
+        setLiveCountUpdating(true);
+        // Reset updating state after animation completes
+        setTimeout(() => setLiveCountUpdating(false), 300);
+        return newCount;
+      });
+    }, 20000 + Math.random() * 10000); // Random interval between 20-40 seconds
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Headline variants for A/B testing
   const headlineVariants = [
@@ -23,6 +68,9 @@ function App() {
   ];
 
   const currentHeadline = headlineVariants[headlineVariant];
+
+  // Format time with leading zeros
+  const formatTime = (time) => String(time).padStart(2, '0');
 
   // Handle checkout
   const handleCheckout = () => {
@@ -80,9 +128,9 @@ function App() {
         </div>
       </div>
 
-      {/* Exit Intent Popup (simplified) */}
+      {/* Exit Intent Popup (enhanced) */}
       {showCheckout && (
-        <div className="exit-intent-popup">
+        <div className="exit-intent-popup show">
           <div className="exit-content">
             <h2>Wait! Don't go yet...</h2>
             <p>Complete your purchase now and get an extra 10% off!</p>
@@ -130,16 +178,18 @@ function App() {
               <div className="hero-scarcity">
                 <div className="countdown-timer">
                   <div>Offer ends in:</div>
-                  <div className="timer">02:15:30</div>
+                  <div className="timer">
+                    {formatTime(countdown.hours)}:{formatTime(countdown.minutes)}:{formatTime(countdown.seconds)}
+                  </div>
                 </div>
                 <div className="stock-indicator">
                   <span>Only 37 left at this price</span>
                 </div>
               </div>
-              
+
               {/* Live Counter */}
               <div className="live-counter">
-                <span>1,247 people bought this in the last 24 hours</span>
+                <span>{liveCount.toLocaleString()} people bought this in the last 24 hours</span>
               </div>
             </div>
             
@@ -150,18 +200,18 @@ function App() {
           </section>
 
           {/* Benefit-Driven Copy */}
-          <section className="benefits-section">
+          <section className="benefits-section visible">
             <div className="section-header">
               <h2>Why Our Formula Works</h2>
               <p>Unlike other supplements that make empty promises, we deliver real results.</p>
             </div>
             
-            <div className="problem-agitation">
+            <div className="problem-agitation visible">
               <h3>The Problem With Other Supplements</h3>
               <p>Most supplements use cheap, ineffective ingredients in insufficient doses. You're essentially paying for expensive urine.</p>
             </div>
             
-            <div className="solution">
+            <div className="solution visible">
               <h3>Our Science-Backed Solution</h3>
               <p>We use clinically studied doses of premium ingredients that actually work synergistically.</p>
             </div>
@@ -187,7 +237,7 @@ function App() {
           </section>
 
           {/* Scientific Backing */}
-          <section className="science-section">
+          <section className="science-section visible">
             <div className="section-header">
               <h2>What Makes Us Different</h2>
               <p>Transparency you can trust.</p>
@@ -224,7 +274,7 @@ function App() {
           </section>
 
           {/* Trust-Building Elements */}
-          <section className="trust-section">
+          <section className="trust-section visible">
             <div className="section-header">
               <h2>Why Customers Trust Us</h2>
               <p>Real results from real people.</p>
@@ -294,7 +344,7 @@ function App() {
           </section>
 
           {/* FAQ Section */}
-          <section className="faq-section">
+          <section className="faq-section visible">
             <div className="section-header">
               <h2>Frequently Asked Questions</h2>
               <p>Answers to common concerns</p>
